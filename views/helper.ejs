@@ -9,200 +9,52 @@
 
 <body>
 
-<h1>Helper Dashboard</h1>
+    <h1>Helper Dashboard</h1>
 
-<h2>Assistance Request</h2>
 
-<div id="request">
-    Checking for requests...
-</div>
+    <div id="loginSection">
 
+        <p>
+            You are not logged in.
+        </p>
 
-<button onclick="acceptRequest()">
-    Accept
-</button>
+        <button onclick="goToLogin()">
+            Login
+        </button>
 
-<button onclick="rejectRequest()">
-    Reject
-</button>
+    </div>
 
 
-<p id="status"></p>
+    <div id="dashboard"
+         style="display:none;">
 
+        <h2>Assistance Request</h2>
 
-<script>
+        <div id="request">
+            Checking for requests...
+        </div>
 
 
-// =====================================================
-// CHECK FOR REQUEST
-// =====================================================
+        <div id="buttons"
+             style="display:none;">
 
-function checkRequest() {
+            <button onclick="acceptRequest()">
+                Accept
+            </button>
 
-    fetch("/helper-request")
+            <button onclick="rejectRequest()">
+                Reject
+            </button>
 
-    .then(response => response.json())
+        </div>
 
-    .then(data => {
 
-        console.log("Request received:", data);
+        <p id="status"></p>
 
+    </div>
 
-        if (!data.found) {
 
-            document.getElementById("request").innerText =
-                "No request yet.";
-
-            return;
-
-        }
-
-
-        const request = data.request;
-
-
-        document.getElementById("request").innerHTML = `
-
-            <p>
-                <strong>User:</strong>
-                ${request.userName}
-            </p>
-
-            <p>
-                <strong>Phone:</strong>
-                ${request.userPhone || "Not provided"}
-            </p>
-
-            <p>
-                <strong>Problem:</strong>
-                ${request.problem}
-            </p>
-
-            <p>
-                <strong>Category:</strong>
-                ${request.category}
-            </p>
-
-            <p>
-                <strong>User Location:</strong>
-                Location received
-            </p>
-
-            <a
-                href="https://www.google.com/maps?q=${request.latitude},${request.longitude}"
-                target="_blank"
-            >
-                <button>
-                    View User Location
-                </button>
-            </a>
-
-            <br><br>
-
-            ${
-                request.userPhone
-                ?
-                `
-                <a href="tel:${request.userPhone}">
-                    <button>Call User</button>
-                </a>
-                `
-                :
-                ""
-            }
-
-        `;
-
-    })
-
-    .catch(error => {
-
-        console.log("Error checking request:", error);
-
-        document.getElementById("request").innerText =
-            "Error checking for request.";
-
-    });
-
-}
-
-
-// =====================================================
-// ACCEPT REQUEST
-// =====================================================
-
-function acceptRequest() {
-
-    fetch("/accept-request", {
-
-        method: "POST"
-
-    })
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        console.log("Accept:", data);
-
-        document.getElementById("status").innerText =
-            data.message;
-
-        checkRequest();
-
-    })
-
-    .catch(error => {
-
-        console.log("Error accepting request:", error);
-
-    });
-
-}
-
-
-// =====================================================
-// REJECT REQUEST
-// =====================================================
-
-function rejectRequest() {
-
-    fetch("/reject-request", {
-
-        method: "POST"
-
-    })
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        console.log("Reject:", data);
-
-        document.getElementById("status").innerText =
-            data.message;
-
-        checkRequest();
-
-    })
-
-    .catch(error => {
-
-        console.log("Error rejecting request:", error);
-
-    });
-
-}
-
-
-// Check for new request every 3 seconds
-
-checkRequest();
-
-setInterval(checkRequest, 3000);
-
-
-</script>
+    <script src="/helper.js"></script>
 
 </body>
 

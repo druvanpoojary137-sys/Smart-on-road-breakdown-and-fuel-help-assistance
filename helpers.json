@@ -1,0 +1,53 @@
+[
+    {
+        "name": "Ravi Auto Works",
+        "phone": "9876543210",
+        "service": "PUNCTURE",
+        "latitude": 13.3409,
+        "longitude": 74.7421,
+        "available": true
+    },
+    {
+        "name": "Quick Battery Service",
+        "phone": "9876543211",
+        "service": "BATTERY_STARTING",
+        "latitude": 13.3450,
+        "longitude": 74.7500,
+        "available": true
+    },
+    {
+        "name": "City Fuel Assistance",
+        "phone": "9876543212",
+        "service": "FUEL",
+        "latitude": 13.3380,
+        "longitude": 74.7350,
+        "available": true
+    },
+    {
+        "name": "Emergency Towing",
+        "phone": "9876543213",
+        "service": "TOWING",
+        "latitude": 13.3500,
+        "longitude": 74.7600,
+        "available": true
+    },
+
+    {
+    "name": "Fast Tyre Repair",
+    "phone": "9876543214",
+    "service": "PUNCTURE",
+    "latitude": 13.3455,
+    "longitude": 74.7480,
+    "available": true
+},
+
+{
+    "name": "Quick Tyre Rescue",
+    "phone": "9876543215",
+    "service": "PUNCTURE",
+    "latitude": 13.3500,
+    "longitude": 74.7550,
+    "available": true
+}
+
+]

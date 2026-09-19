@@ -1,0 +1,241 @@
+text,label
+My scooter's back tyre went flat near the market,PUNCTURE
+My scooter tyre is losing air slowly since morning,PUNCTURE
+Ran out of gas on the service road,FUEL
+My car ran out of petrol in the middle of nowhere,FUEL
+"My vehicle stopped, checked and tank is empty",FUEL
+"Bike gearbox jammed, cannot move it at all",TOWING
+Something doesn't feel right with my vehicle today,OTHER
+My scooter is out of petrol near the flyover,FUEL
+"I have a slow puncture, tyre keeps going soft",PUNCTURE
+My car's engine bay is unusually hot right now,OVERHEATING
+"My car won't start, dashboard lights are very dim",BATTERY_STARTING
+"Car is shaking a lot while driving, unsure of the reason",OTHER
+"Car engine stopped suddenly, fuel is finished",FUEL
+Bike fell into a pothole and can't be ridden now,TOWING
+"My bike's tank is dry, can't start it",FUEL
+"Car feels unstable while driving, can't pinpoint the issue",OTHER
+Vehicle won't move due to major mechanical failure,TOWING
+My car's rear tyre is completely deflated,PUNCTURE
+Car engine overheated after a long highway drive,OVERHEATING
+Temperature warning light just came on suddenly,OVERHEATING
+My scooter engine is too hot to touch,OVERHEATING
+"Tyre is flat, need someone to fix or replace it",PUNCTURE
+"My car suddenly lost power briefly, unclear why",OTHER
+Car tyre punctured on the service road,PUNCTURE
+My scooter is damaged and needs to be lifted onto a truck,TOWING
+Engine making ticking sound along with overheating,OVERHEATING
+Got a flat tyre just outside the toll booth,PUNCTURE
+My car is making a strange noise I can't identify,OTHER
+Vehicle control feels different since this morning,OTHER
+Smell of burning coolant coming from my vehicle,OVERHEATING
+Stuck without petrol near the toll plaza,FUEL
+Something in my car dashboard flashed and now it's off,OTHER
+Feels like a nail went into my tyre,PUNCTURE
+"Car stuck between vehicles, need recovery van",TOWING
+Tube inside my tyre seems to have burst,PUNCTURE
+Bike won't start even after multiple kicks,BATTERY_STARTING
+"Bike wheel came off completely, cannot move it",TOWING
+"My two wheeler won't start, no power at all",BATTERY_STARTING
+"Starter problem, bike not starting since last night",BATTERY_STARTING
+"Car wheels are locked, can't move it manually",TOWING
+"Strange noise coming from the wheels, unclear cause",OTHER
+"Need fuel assistance, forgot to refill before the trip",FUEL
+"My bike handlebar feels loose, not sure of the issue",OTHER
+Scooter front tyre punctured near the signal,PUNCTURE
+Overheating issue happening again and again today,OVERHEATING
+"Engine cranking very slowly, battery weak",BATTERY_STARTING
+"My scooter broke down completely, can't push it home",TOWING
+My car has a punctured tyre and no tools to change it,PUNCTURE
+There is white smoke coming from the front of the car,OVERHEATING
+"Vehicle not starting since morning, battery drained",BATTERY_STARTING
+Dashboard is showing a warning light I don't understand,OTHER
+"My scooter axle seems broken, needs towing",TOWING
+Something feels off with my vehicle today,OTHER
+"Car transmission failed, vehicle can't move now",TOWING
+Not sure what's wrong but my bike doesn't feel right,OTHER
+My bike is making unusual sounds while riding,OTHER
+Petrol ran out near the flyover exit,FUEL
+Car pulling to one side for some unknown reason,OTHER
+"My car horn is also not working, battery issue",BATTERY_STARTING
+"Engine bonnet is too hot, afraid to open it",OVERHEATING
+"Bike engine cut off, tank is completely dry",FUEL
+Engine is making a hissing sound and getting hot,OVERHEATING
+Steam is coming from under my car bonnet,OVERHEATING
+No electrical power in my vehicle at all,BATTERY_STARTING
+Car stalled because there's no fuel left,FUEL
+"Starter is not working, think battery is the issue",BATTERY_STARTING
+Stranded with an empty tank far from any pump,FUEL
+Ran out of diesel just before the petrol pump,FUEL
+"Stuck on the road, need petrol delivered",FUEL
+Need tow truck to shift my bike to the showroom,TOWING
+"Accident damaged my car, needs towing now",TOWING
+"Scooter stopped working, out of petrol completely",FUEL
+Tyre completely deflated after hitting a rock,PUNCTURE
+Car is overheating badly on the highway,OVERHEATING
+Bike battery drained after being parked for days,BATTERY_STARTING
+Car stopped because tank is completely empty,FUEL
+There's a nail stuck in my tyre and its deflating,PUNCTURE
+"Ac and lights stopped working, battery seems dead",BATTERY_STARTING
+Car needs towing to the nearest service center,TOWING
+Cooling problem causing my car to overheat repeatedly,OVERHEATING
+"Fuel finished suddenly, nearest pump is far away",FUEL
+My car needs a jump start urgently,BATTERY_STARTING
+My scooter is vibrating a lot for no clear reason,OTHER
+"Strange smell coming from my car, don't know the cause",OTHER
+Cooling system seems to have failed completely,OVERHEATING
+Two wheeler stuck due to flat rear tyre,PUNCTURE
+Front wheel air is gone completely,PUNCTURE
+Scooter tyre burst suddenly while riding,PUNCTURE
+My bike tyre burst with a loud sound,PUNCTURE
+Scooter self start not working at all,BATTERY_STARTING
+Car making an odd sound every time I brake,OTHER
+My car stopped because engine got too hot,OVERHEATING
+"Car is completely immobile, need a tow truck",TOWING
+"Need a jump start, car battery is completely down",BATTERY_STARTING
+Car started overheating suddenly in traffic,OVERHEATING
+Vehicle immobile after a major breakdown on the highway,TOWING
+Getting only a faint clicking sound from engine,BATTERY_STARTING
+"My bike doesn't start, battery seems dead",BATTERY_STARTING
+"Bike is not moving at all, needs to be transported",TOWING
+Bike engine feels like it's about to seize from heat,OVERHEATING
+My vehicle needs urgent battery jumpstart assistance,BATTERY_STARTING
+Bike engine cuts off due to excessive heat,OVERHEATING
+Wheel is wobbling and tyre is losing air,PUNCTURE
+"Random error message on dashboard, no idea what it means",OTHER
+"My bike suddenly feels heavier to ride, unsure why",OTHER
+"Not sure what's happening, just want someone to check my vehicle",OTHER
+Temperature needle is stuck in the red zone,OVERHEATING
+My bike tyre suddenly lost all its air,PUNCTURE
+I think I got a puncture near the highway,PUNCTURE
+Car won't crank at all this morning,BATTERY_STARTING
+"Bike kick start also not working, battery dead maybe",BATTERY_STARTING
+"Petrol tank empty, can't reach the next pump",FUEL
+Vehicle stalled completely due to lack of fuel,FUEL
+Overheating warning light has been on for ten minutes,OVERHEATING
+Need someone with a trailer to move my car,TOWING
+"Need someone to bring fuel urgently, stranded here",FUEL
+Fuel gauge shows empty and vehicle stopped,FUEL
+"Need a tow truck urgently, car won't budge",TOWING
+Bike engine is unusually hot even while idle,OVERHEATING
+"My scooter just stopped, out of fuel I think",FUEL
+Bike wheel has zero air pressure now,PUNCTURE
+Engine temperature keeps rising continuously,OVERHEATING
+My scooter shows low battery and refuses to start,BATTERY_STARTING
+"Bike tyre punctured, cant ride it anymore",PUNCTURE
+"My scooter fuel light was ignored, now it's empty",FUEL
+Steam burst out the moment I opened the bonnet,OVERHEATING
+"My car's engine fell out of place, needs towing urgently",TOWING
+"My vehicle tyre is punctured, need a mechanic",PUNCTURE
+My two wheeler tyre is punctured badly,PUNCTURE
+"Odd smell and noise together, not sure what's wrong",OTHER
+Got stuck with a flat tyre and no spare,PUNCTURE
+Coolant tank looks empty and engine is overheating,OVERHEATING
+Tyre pressure dropped suddenly while riding,PUNCTURE
+My bike engine feels extremely hot,OVERHEATING
+Tyre air keeps reducing every few minutes,PUNCTURE
+My scooter shows an overheating warning symbol,OVERHEATING
+My vehicle needs to be transported to the workshop,TOWING
+"Just clicking sound coming, engine not turning over",BATTERY_STARTING
+"Radiator seems to be overheating, steam everywhere",OVERHEATING
+Coolant seems to be leaking from my car,OVERHEATING
+"Something is rattling inside my car, can't locate it",OTHER
+My car needs to be shifted to the service station,TOWING
+Car battery light on dashboard is blinking,BATTERY_STARTING
+"Bike suspension broke, cannot be ridden further",TOWING
+Bike electric start failed multiple times,BATTERY_STARTING
+Vehicle battery seems completely drained,BATTERY_STARTING
+My scooter engine shuts off due to heat every time,OVERHEATING
+Car is making clicking noise but engine isn't starting,BATTERY_STARTING
+Smoke seems to be coming out from the engine area,OVERHEATING
+"Car tyre pressure suddenly zero, stuck on roadside",PUNCTURE
+"Bike chain broke completely, can't ride or push properly",TOWING
+"Bike cannot be pushed, wheel is jammed completely",TOWING
+My bike ran out of fuel suddenly,FUEL
+"Tyre pressure fell to zero suddenly, stuck here",PUNCTURE
+Something is wrong with my bike but I don't know what,OTHER
+No response at all when I press the start button,BATTERY_STARTING
+"My car's fuel light has been on for a while, now it stopped",FUEL
+"Two wheeler completely non-functional, needs transport",TOWING
+Getting only a click sound when I turn the key,BATTERY_STARTING
+Steam is visible near the engine every time I stop,OVERHEATING
+My scooter smells weird but I don't know from where,OTHER
+Rear wheel of my car has gone flat,PUNCTURE
+Need small quantity of petrol to reach the pump,FUEL
+"Car making clicking sound repeatedly, not starting",BATTERY_STARTING
+My car engine smells like something is burning,OVERHEATING
+"Not sure what happened, vehicle just stopped responding normally",OTHER
+Need a flatbed truck for my car immediately,TOWING
+Something strange is happening with my vehicle's controls,OTHER
+"Battery indicator shows very low, vehicle not starting",BATTERY_STARTING
+"Need recovery assistance, vehicle stuck in a ditch",TOWING
+Petrol got over and I'm stuck near the road,FUEL
+Front tyre of car looks completely flat now,PUNCTURE
+Car tyre burst on the way to office,PUNCTURE
+"Stuck in mud, vehicle needs towing assistance",TOWING
+Fuel meter dropped to empty and engine stopped,FUEL
+My vehicle stopped mid way due to no fuel,FUEL
+"Need emergency petrol, stuck on the highway",FUEL
+"Vehicle is behaving oddly, need someone to check it",OTHER
+My scooter dashboard is flickering unusually,OTHER
+"Bike suddenly stopped, think petrol finished",FUEL
+"Bike wheel is completely flat, can't ride further",PUNCTURE
+Tyre went flat suddenly on the highway,PUNCTURE
+"Car dashboard is completely blank, battery dead",BATTERY_STARTING
+"My scooter is acting strange, not sure why",OTHER
+Steam coming out from the radiator area,OVERHEATING
+Bike stopped because tyre has no air at all,PUNCTURE
+Vehicle is stuck and won't move an inch,TOWING
+"Scooter self start jammed, battery seems low",BATTERY_STARTING
+"My bike engine sound has changed suddenly, not sure why",OTHER
+Bike gets extremely hot after just ten minutes of riding,OVERHEATING
+"Vehicle stuck near the bridge, requesting recovery",TOWING
+"Unusual noise from the engine, can't tell what it is",OTHER
+"Battery terminal might be loose, car not starting",BATTERY_STARTING
+"Ignition doesn't respond, seems like battery problem",BATTERY_STARTING
+"Bike stopped abruptly, fuel tank reading zero",FUEL
+My scooter battery died suddenly this morning,BATTERY_STARTING
+Car needs to be craned out of the ditch,TOWING
+"Vehicle completely broke down, requesting recovery",TOWING
+"Requesting immediate towing, vehicle totally immobile",TOWING
+Need urgent towing service for my stranded car,TOWING
+"Bike seat area feels loose, unsure of the actual issue",OTHER
+"Warning symbol appeared on dashboard, meaning unclear",OTHER
+"Car engine seized completely, needs to be towed",TOWING
+Bike starter motor not engaging properly,BATTERY_STARTING
+Car engine cranks but doesn't start,BATTERY_STARTING
+"Car ran dry, no fuel left at all",FUEL
+There is air leaking continuously from my tyre,PUNCTURE
+Ignition switch is on but nothing happens,BATTERY_STARTING
+There is a weird vibration coming from my bike,OTHER
+My vehicle can't move and I need it taken to a garage,TOWING
+My scooter jerks occasionally for an unknown reason,OTHER
+"Car stuck in a narrow lane, requesting tow assistance",TOWING
+My car needs to be recovered from the roadside,TOWING
+Car AC stopped and engine temperature is rising,OVERHEATING
+I noticed my tyre going flat gradually today,PUNCTURE
+Car engine light and temperature warning both on,OVERHEATING
+"Vehicle indicator lights blinking randomly, confused",OTHER
+Front tyre of my scooter is completely flat,PUNCTURE
+"Bike headlight is very weak, battery issue I think",BATTERY_STARTING
+Temperature gauge crossed the normal zone completely,OVERHEATING
+Bike engine heating up quickly even at low speed,OVERHEATING
+Bike radiator fan doesn't seem to be working,OVERHEATING
+Ran completely out of fuel on a long drive,FUEL
+"Need urgent fuel delivery, car stopped on the road",FUEL
+"No fuel left, vehicle just stopped moving",FUEL
+"Forgot to check fuel, now stuck with empty tank",FUEL
+Vehicle behaving abnormally since this morning,OTHER
+Ignition key turns but nothing happens after that,BATTERY_STARTING
+Strange clunking noise from underneath the car,OTHER
+"Not sure what's wrong, vehicle just feels different",OTHER
+Engine temperature gauge is showing red,OVERHEATING
+"Something unusual going on with my car, need inspection",OTHER
+My car wheel hit a pothole and now it's flat,PUNCTURE
+"Bike completely stopped working, need it towed home",TOWING
+"Vehicle completely dead, not even lights working",BATTERY_STARTING
+Diesel finished suddenly while driving on highway,FUEL
+"Think I ran over glass, tyre deflated fast",PUNCTURE
+"Petrol indicator was showing low, now it's zero",FUEL
+"Vehicle is stuck on the flyover, need urgent towing",TOWING
+Bike petrol got over near the outskirts of town,FUEL

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Helper Dashboard</title>
+
+</head>
+
+<body>
+
+<h1>Helper Dashboard</h1>
+
+<h2>Assistance Request</h2>
+
+<div id="request">
+    Checking for requests...
+</div>
+
+
+<button onclick="acceptRequest()">
+    Accept
+</button>
+
+<button onclick="rejectRequest()">
+    Reject
+</button>
+
+
+<p id="status"></p>
+
+
+<script>
+
+
+// =====================================================
+// CHECK FOR REQUEST
+// =====================================================
+
+function checkRequest() {
+
+    fetch("/helper-request")
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log("Request received:", data);
+
+
+        if (!data.found) {
+
+            document.getElementById("request").innerText =
+                "No request yet.";
+
+            return;
+
+        }
+
+
+        const request = data.request;
+
+
+        document.getElementById("request").innerHTML = `
+
+            <p>
+                <strong>User:</strong>
+                ${request.userName}
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                ${request.userPhone || "Not provided"}
+            </p>
+
+            <p>
+                <strong>Problem:</strong>
+                ${request.problem}
+            </p>
+
+            <p>
+                <strong>Category:</strong>
+                ${request.category}
+            </p>
+
+            <p>
+                <strong>User Location:</strong>
+                Location received
+            </p>
+
+            <a
+                href="https://www.google.com/maps?q=${request.latitude},${request.longitude}"
+                target="_blank"
+            >
+                <button>
+                    View User Location
+                </button>
+            </a>
+
+            <br><br>
+
+            ${
+                request.userPhone
+                ?
+                `
+                <a href="tel:${request.userPhone}">
+                    <button>Call User</button>
+                </a>
+                `
+                :
+                ""
+            }
+
+        `;
+
+    })
+
+    .catch(error => {
+
+        console.log("Error checking request:", error);
+
+        document.getElementById("request").innerText =
+            "Error checking for request.";
+
+    });
+
+}
+
+
+// =====================================================
+// ACCEPT REQUEST
+// =====================================================
+
+function acceptRequest() {
+
+    fetch("/accept-request", {
+
+        method: "POST"
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log("Accept:", data);
+
+        document.getElementById("status").innerText =
+            data.message;
+
+        checkRequest();
+
+    })
+
+    .catch(error => {
+
+        console.log("Error accepting request:", error);
+
+    });
+
+}
+
+
+// =====================================================
+// REJECT REQUEST
+// =====================================================
+
+function rejectRequest() {
+
+    fetch("/reject-request", {
+
+        method: "POST"
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log("Reject:", data);
+
+        document.getElementById("status").innerText =
+            data.message;
+
+        checkRequest();
+
+    })
+
+    .catch(error => {
+
+        console.log("Error rejecting request:", error);
+
+    });
+
+}
+
+
+// Check for new request every 3 seconds
+
+checkRequest();
+
+setInterval(checkRequest, 3000);
+
+
+</script>
+
+</body>
+
+</html>

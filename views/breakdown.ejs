@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Vehicle Breakdown Assistance</title>
+</head>
+
+<body>
+
+    <h1>Vehicle Breakdown Assistance</h1>
+
+
+    <!-- =========================
+         DESCRIBE PROBLEM
+    ========================== -->
+
+    <h2>Describe Your Vehicle Problem</h2>
+
+    <textarea
+        id="problem"
+        rows="5"
+        cols="50"
+        placeholder="Example: My car tyre is flat">
+    </textarea>
+
+    <br><br>
+
+    <button onclick="checkProblem()">
+        Check Problem
+    </button>
+
+    <p id="problemStatus"></p>
+
+
+    <!-- =========================
+         LOCATION
+    ========================== -->
+
+    <h2>Your Location</h2>
+
+    <button onclick="getLocation()">
+        Get My Location
+    </button>
+
+    <p id="locationStatus">
+        Location not detected
+    </p>
+
+    <p>
+        Latitude:
+        <span id="latitude">-</span>
+    </p>
+
+    <p>
+        Longitude:
+        <span id="longitude">-</span>
+    </p>
+
+
+    <!-- =========================
+         PROBLEM CATEGORY
+    ========================== -->
+
+    <div id="categorySection" style="display: none;">
+
+        <h2>Problem Category</h2>
+
+        <p id="category"></p>
+
+    </div>
+
+
+    <!-- =========================
+         AVAILABLE HELPERS
+    ========================== -->
+
+    <div id="helpersSection" style="display: none;">
+
+        <h2>Available Helpers</h2>
+
+        <div id="helpers"></div>
+
+    </div>
+
+
+    <!-- =========================
+         ASSISTANCE REQUEST STATUS
+    ========================== -->
+
+    <h2>Assistance Request Status</h2>
+
+    <p id="requestStatus">
+        No request yet.
+    </p>
+
+    <div id="acceptedDetails"></div>
+
+
+<script>
+
+    let userLatitude = null;
+    let userLongitude = null;
+    let detectedCategory = null;
+
+
+    // ==========================================
+    // GET USER LOCATION
+    // ==========================================
+
+    function getLocation() {
+
+        if (!navigator.geolocation) {
+
+            document.getElementById("locationStatus").innerText =
+                "Geolocation is not supported.";
+
+            return;
+        }
+
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                userLatitude =
+                    position.coords.latitude;
+
+                userLongitude =
+                    position.coords.longitude;
+
+
+                document.getElementById("latitude").innerText =
+                    userLatitude;
+
+                document.getElementById("longitude").innerText =
+                    userLongitude;
+
+
+                document.getElementById("locationStatus").innerText =
+                    "Location detected successfully!";
+
+
+                console.log("User Latitude:", userLatitude);
+                console.log("User Longitude:", userLongitude);
+
+            },
+
+
+            function(error) {
+
+                console.log("Location error:", error);
+
+                document.getElementById("locationStatus").innerText =
+                    "Unable to get location.";
+
+            }
+
+        );
+
+    }
+
+
+    // ==========================================
+    // CHECK PROBLEM
+    // ==========================================
+
+    function checkProblem() {
+
+        const problem =
+            document.getElementById("problem").value.trim();
+
+
+        // Check whether problem is entered
+
+        if (!problem) {
+
+            alert("Please describe your vehicle problem.");
+
+            return;
+        }
+
+
+        // Check whether location is available
+
+        if (
+            userLatitude === null ||
+            userLongitude === null
+        ) {
+
+            alert("Please get your location first.");
+
+            return;
+        }
+
+
+        document.getElementById("problemStatus").innerText =
+            "Checking problem...";
+
+
+        // Send problem to NLP
+
+        fetch("/predict", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json"
+
+            },
+
+            body: JSON.stringify({
+
+                problem: problem
+
+            })
+
+        })
+
+
+        .then(response => response.json())
+
+
+        .then(data => {
+
+            console.log("Prediction:", data);
+
+
+            detectedCategory =
+                data.category;
+
+
+            // Show category
+
+            document.getElementById("categorySection")
+                .style.display = "block";
+
+
+            document.getElementById("category")
+                .innerText = detectedCategory;
+
+
+            document.getElementById("problemStatus")
+                .innerText =
+                "Problem identified successfully!";
+
+
+            // Find helpers
+
+            findHelpers();
+
+        })
+
+
+        .catch(error => {
+
+            console.log("Prediction error:", error);
+
+            document.getElementById("problemStatus")
+                .innerText =
+                "Error checking problem.";
+
+        });
+
+    }
+
+
+    // ==========================================
+    // FIND HELPERS
+    // ==========================================
+
+    function findHelpers() {
+
+        fetch("/find-helper", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json"
+
+            },
+
+            body: JSON.stringify({
+
+                category:
+                    detectedCategory,
+
+                latitude:
+                    userLatitude,
+
+                longitude:
+                    userLongitude
+
+            })
+
+        })
+
+
+        .then(response => response.json())
+
+
+        .then(data => {
+
+            console.log("Helpers:", data);
+
+
+            const helpersDiv =
+                document.getElementById("helpers");
+
+
+            helpersDiv.innerHTML = "";
+
+
+            // No helpers
+
+            if (
+                !data.helpers ||
+                data.helpers.length === 0
+            ) {
+
+                helpersDiv.innerHTML =
+                    "<p>No available helpers found.</p>";
+
+
+                document.getElementById("helpersSection")
+                    .style.display = "block";
+
+
+                return;
+            }
+
+
+            // Show helpers section
+
+            document.getElementById("helpersSection")
+                .style.display = "block";
+
+
+            // Display helpers
+
+            data.helpers.forEach(function(helper) {
+
+                const helperDiv =
+                    document.createElement("div");
+
+
+                helperDiv.innerHTML = `
+
+                    <hr>
+
+                    <p>
+                        <strong>Name:</strong>
+                        ${helper.name}
+                    </p>
+
+                    <p>
+                        <strong>Phone:</strong>
+                        ${helper.phone}
+                    </p>
+
+                    <p>
+                        <strong>Service:</strong>
+                        ${helper.service}
+                    </p>
+
+                    <p>
+                        <strong>Distance:</strong>
+                        ${helper.distance} km
+                    </p>
+
+                    <a href="tel:${helper.phone}">
+                        <button>
+                            Call Helper
+                        </button>
+                    </a>
+
+                    <button
+                        onclick="requestAssistance(
+                            '${helper.phone}'
+                        )">
+
+                        Request Assistance
+
+                    </button>
+
+                `;
+
+
+                helpersDiv.appendChild(helperDiv);
+
+            });
+
+        })
+
+
+        .catch(error => {
+
+            console.log("Helper error:", error);
+
+            document.getElementById("helpers")
+                .innerHTML =
+                "<p>Error finding helpers.</p>";
+
+        });
+
+    }
+
+
+    // ==========================================
+    // REQUEST ASSISTANCE
+    // ==========================================
+
+    function requestAssistance(helperPhone) {
+
+        const problem =
+            document.getElementById("problem")
+                .value.trim();
+
+
+        document.getElementById("requestStatus")
+            .innerText =
+            "Sending assistance request...";
+
+
+        fetch("/request-helper", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json"
+
+            },
+
+            body: JSON.stringify({
+
+                userName:
+                    "Vehicle User",
+
+                userPhone:
+                    "",
+
+                helperPhone:
+                    helperPhone,
+
+                problem:
+                    problem,
+
+                category:
+                    detectedCategory,
+
+                latitude:
+                    userLatitude,
+
+                longitude:
+                    userLongitude
+
+            })
+
+        })
+
+
+        .then(response => response.json())
+
+
+        .then(data => {
+
+            console.log("Request:", data);
+
+
+            document.getElementById("requestStatus")
+                .innerText =
+                "Request sent. Waiting for helper response...";
+
+
+            checkRequestStatus();
+
+        })
+
+
+        .catch(error => {
+
+            console.log("Request error:", error);
+
+            document.getElementById("requestStatus")
+                .innerText =
+                "Error sending request.";
+
+        });
+
+    }
+
+
+    // ==========================================
+    // CHECK REQUEST STATUS
+    // ==========================================
+
+    function checkRequestStatus() {
+
+        fetch("/request-status")
+
+
+        .then(response => response.json())
+
+
+        .then(data => {
+
+            console.log("Request status:", data);
+
+
+            if (!data.found) {
+
+                return;
+
+            }
+
+
+            const request =
+                data.request;
+
+
+            // PENDING
+
+            if (
+                request.status === "PENDING"
+            ) {
+
+                document.getElementById("requestStatus")
+                    .innerText =
+                    "Your request is PENDING. Waiting for helper...";
+
+            }
+
+
+            // ACCEPTED
+
+            else if (
+                request.status === "ACCEPTED"
+            ) {
+
+                document.getElementById("requestStatus")
+                    .innerText =
+                    "Helper ACCEPTED your request!";
+
+
+                document.getElementById("acceptedDetails")
+                    .innerHTML = `
+
+                        <p>
+                            <strong>Helper:</strong>
+                            ${request.helperName || "Helper"}
+                        </p>
+
+                        <p>
+                            <strong>Phone:</strong>
+                            ${request.helperPhone}
+                        </p>
+
+                        <a href="tel:${request.helperPhone}">
+                            <button>
+                                Call Helper
+                            </button>
+                        </a>
+
+                        <p>
+                            Your location has been
+                            shared with the helper.
+                        </p>
+
+                    `;
+
+            }
+
+
+            // REJECTED
+
+            else if (
+                request.status === "REJECTED"
+            ) {
+
+                document.getElementById("requestStatus")
+                    .innerText =
+                    "Helper REJECTED your request.";
+
+
+                document.getElementById("acceptedDetails")
+                    .innerHTML = "";
+
+            }
+
+        })
+
+
+        .catch(error => {
+
+            console.log(
+                "Status error:",
+                error
+            );
+
+        });
+
+    }
+
+
+    // Check request status every 3 seconds
+
+    setInterval(
+        checkRequestStatus,
+        3000
+    );
+
+</script>
+
+</body>
+
+</html>
+

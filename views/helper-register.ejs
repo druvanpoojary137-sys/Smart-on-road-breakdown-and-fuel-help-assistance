@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Helper Registration</title>
+</head>
+
+<body>
+
+    <h1>Helper Registration</h1>
+
+    <form action="/register-helper" method="POST">
+
+        <label>Name:</label>
+        <input type="text" name="name" required>
+
+        <br><br>
+
+        <label>Phone:</label>
+        <input type="text" name="phone" required>
+
+        <br><br>
+
+        <label>Service:</label>
+
+        <select name="service" required>
+            <option value="PUNCTURE">Puncture</option>
+            <option value="BATTERY_STARTING">Battery / Starting</option>
+            <option value="FUEL">Fuel Assistance</option>
+            <option value="OVERHEATING">Overheating</option>
+            <option value="TOWING">Towing</option>
+        </select>
+
+        <br><br>
+
+        <button type="button" onclick="getHelperLocation()">
+            Get My Location
+        </button>
+
+        <p id="locationStatus">
+            Location not detected
+        </p>
+
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+
+        <br>
+
+        <button type="submit">
+            Register as Helper
+        </button>
+
+    </form>
+
+
+    <script>
+
+        function getHelperLocation() {
+
+            if (!navigator.geolocation) {
+
+                document.getElementById("locationStatus").innerText =
+                    "Geolocation is not supported.";
+
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+
+                function (position) {
+
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    document.getElementById("latitude").value =
+                        latitude;
+
+                    document.getElementById("longitude").value =
+                        longitude;
+
+                    document.getElementById("locationStatus").innerText =
+                        "Location detected successfully!";
+
+                    console.log("Helper Latitude:", latitude);
+                    console.log("Helper Longitude:", longitude);
+
+                },
+
+                function (error) {
+
+                    console.log("Location error:", error);
+
+                    document.getElementById("locationStatus").innerText =
+                        "Unable to get location.";
+
+                }
+
+            );
+        }
+
+    </script>
+
+</body>
+
+</html>
+

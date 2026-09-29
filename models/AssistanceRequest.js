@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
-const assistanceRequestSchema = new mongoose.Schema(
-    {
+const assistanceRequestSchema =
+    new mongoose.Schema({
+
         userName: {
             type: String,
             required: true
@@ -14,7 +15,7 @@ const assistanceRequestSchema = new mongoose.Schema(
 
         helperName: {
             type: String,
-            default: ""
+            required: true
         },
 
         helperPhone: {
@@ -33,32 +34,28 @@ const assistanceRequestSchema = new mongoose.Schema(
         },
 
         latitude: {
-            type: Number,
-            required: true
+            type: Number
         },
 
         longitude: {
-            type: Number,
-            required: true
+            type: Number
         },
 
         status: {
             type: String,
+
             enum: [
                 "PENDING",
                 "ACCEPTED",
                 "REJECTED"
             ],
+
             default: "PENDING"
         }
 
-    },
-
-    {
+    }, {
         timestamps: true
-    }
-);
-
+    });
 
 module.exports =
     mongoose.model(

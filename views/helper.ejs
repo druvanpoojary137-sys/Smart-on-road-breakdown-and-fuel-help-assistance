@@ -11,50 +11,357 @@
 
     <h1>Helper Dashboard</h1>
 
+    <h2 id="helperName">
+        Checking login...
+    </h2>
 
-    <div id="loginSection">
+    <p id="helperPhone"></p>
 
-        <p>
-            You are not logged in.
-        </p>
+    <hr>
 
-        <button onclick="goToLogin()">
-            Login
-        </button>
+    <h2>Assistance Requests</h2>
 
+    <div id="requestArea">
+        Checking for requests...
     </div>
 
+    <br>
 
-    <div id="dashboard"
-         style="display:none;">
-
-        <h2>Assistance Request</h2>
-
-        <div id="request">
-            Checking for requests...
-        </div>
+    <button id="logoutButton">
+        Logout
+    </button>
 
 
-        <div id="buttons"
-             style="display:none;">
+    <script>
 
-            <button onclick="acceptRequest()">
-                Accept
-            </button>
-
-            <button onclick="rejectRequest()">
-                Reject
-            </button>
-
-        </div>
+        let currentRequestId = null;
 
 
-        <p id="status"></p>
+        // ==========================
+        // CHECK HELPER LOGIN
+        // ==========================
 
-    </div>
+        async function checkLogin() {
+
+            try {
+
+                const response =
+                    await fetch("/current-user");
+
+                const data =
+                    await response.json();
+
+                if (
+                    !data.loggedIn ||
+                    data.role !== "helper"
+                ) {
+
+                    window.location.href =
+                        "/helper-login";
+
+                    return;
+                }
+
+                document
+                    .getElementById("helperName")
+                    .textContent =
+                    data.name;
+
+                document
+                    .getElementById("helperPhone")
+                    .textContent =
+                    "Phone: " + data.phone;
+
+                getRequest();
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
+        }
 
 
-    <script src="/helper.js"></script>
+        // ==========================
+        // GET REQUEST
+        // ==========================
+
+        async function getRequest() {
+
+            try {
+
+                const response =
+                    await fetch("/helper-request");
+
+                const data =
+                    await response.json();
+
+                if (!data.success) {
+
+                    document
+                        .getElementById("requestArea")
+                        .textContent =
+                        data.message;
+
+                    return;
+                }
+
+                if (!data.request) {
+
+                    document
+                        .getElementById("requestArea")
+                        .innerHTML =
+                        "<p>No pending requests.</p>";
+
+                    currentRequestId = null;
+
+                    return;
+                }
+
+                const request =
+                    data.request;
+
+                currentRequestId =
+                    request._id;
+
+                document
+                    .getElementById("requestArea")
+                    .innerHTML = `
+
+                        <div>
+
+                            <h3>
+                                New Assistance Request
+                            </h3>
+
+                            <p>
+                                <b>User:</b>
+                                ${request.userName}
+                            </p>
+
+                            <p>
+                                <b>Phone:</b>
+                                ${request.userPhone}
+                            </p>
+
+                            <p>
+                                <b>Problem:</b>
+                                ${request.problem}
+                            </p>
+
+                            <p>
+                                <b>Category:</b>
+                                ${request.category}
+                            </p>
+
+                            <p>
+                                <b>Latitude:</b>
+                                ${request.latitude}
+                            </p>
+
+                            <p>
+                                <b>Longitude:</b>
+                                ${request.longitude}
+                            </p>
+
+                            <button
+                                onclick="acceptRequest()"
+                            >
+                                Accept
+                            </button>
+
+                            <button
+                                onclick="rejectRequest()"
+                            >
+                                Reject
+                            </button>
+
+                        </div>
+                    `;
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
+        }
+
+
+        // ==========================
+        // ACCEPT
+        // ==========================
+
+        async function acceptRequest() {
+
+            if (!currentRequestId) {
+
+                alert("No request selected");
+
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/accept-request",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    requestId:
+                                        currentRequestId
+                                })
+
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                console.log(data);
+
+                if (data.success) {
+
+                    document
+                        .getElementById("requestArea")
+                        .innerHTML =
+                        "<h3>✅ Request accepted</h3>";
+
+                    currentRequestId = null;
+
+                } else {
+
+                    alert(data.message);
+
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Could not accept request"
+                );
+
+            }
+
+        }
+
+
+        // ==========================
+        // REJECT
+        // ==========================
+
+        async function rejectRequest() {
+
+            if (!currentRequestId) {
+
+                alert("No request selected");
+
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/reject-request",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    requestId:
+                                        currentRequestId
+                                })
+
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                console.log(data);
+
+                if (data.success) {
+
+                    document
+                        .getElementById("requestArea")
+                        .innerHTML =
+                        "<h3>❌ Request rejected</h3>";
+
+                    currentRequestId = null;
+
+                } else {
+
+                    alert(data.message);
+
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Could not reject request"
+                );
+
+            }
+
+        }
+
+
+        // ==========================
+        // LOGOUT
+        // ==========================
+
+        document
+            .getElementById("logoutButton")
+            .addEventListener(
+                "click",
+                async function() {
+
+                    await fetch(
+                        "/helper-logout"
+                    );
+
+                    window.location.href =
+                        "/helper-login";
+
+                }
+            );
+
+
+        // ==========================
+        // START
+        // ==========================
+
+        checkLogin();
+
+
+        // Check every 3 seconds
+        setInterval(
+            getRequest,
+            3000
+        );
+
+    </script>
 
 </body>
 

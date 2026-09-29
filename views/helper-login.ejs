@@ -3,32 +3,18 @@
 
 <head>
 
-    <title>User Login</title>
+    <title>Helper Login</title>
 
 </head>
 
 <body>
 
-    <h1>User Login</h1>
+    <h1>Helper Login</h1>
 
-    <form id="loginForm">
-
-        <label>
-            Name
-        </label>
-
-        <br>
-
-        <input
-            type="text"
-            id="name"
-            required
-        >
-
-        <br><br>
+    <form id="helperLoginForm">
 
         <label>
-            Phone
+            Phone Number
         </label>
 
         <br>
@@ -51,26 +37,20 @@
 
     <br>
 
-    <a href="/helper-login">
-        Helper Login
+    <a href="/login">
+        User Login
     </a>
 
 
     <script>
 
         document
-            .getElementById("loginForm")
+            .getElementById("helperLoginForm")
             .addEventListener(
                 "submit",
                 async function(event) {
 
                     event.preventDefault();
-
-                    const name =
-                        document
-                            .getElementById("name")
-                            .value
-                            .trim();
 
                     const phone =
                         document
@@ -81,21 +61,24 @@
                     try {
 
                         const response =
-                            await fetch("/login", {
+                            await fetch(
+                                "/helper-login",
+                                {
 
-                                method: "POST",
+                                    method: "POST",
 
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
 
-                                body: JSON.stringify({
-                                    name: name,
-                                    phone: phone
-                                })
+                                    body:
+                                        JSON.stringify({
+                                            phone: phone
+                                        })
 
-                            });
+                                }
+                            );
 
                         const data =
                             await response.json();

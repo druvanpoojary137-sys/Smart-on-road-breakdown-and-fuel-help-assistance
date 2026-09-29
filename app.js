@@ -1,31 +1,18 @@
 const express = require("express");
-const session = require("express-session");
 const mongoose = require("mongoose");
+const session = require("express-session");
 const { spawn } = require("child_process");
 
 const Helper = require("./models/Helper");
 const AssistanceRequest = require("./models/AssistanceRequest");
 
 const app = express();
+const PORT = 3000;
 
 
-// ==========================================
-// MongoDB Connection
-// ==========================================
-
-mongoose
-    .connect("mongodb://127.0.0.1:27017/vehicleAssistance")
-    .then(() => {
-        console.log("MongoDB connected successfully");
-    })
-    .catch((error) => {
-        console.log("MongoDB connection error:", error);
-    });
-
-
-// ==========================================
-// Middleware
-// ==========================================
+// ===============================
+// MIDDLEWARE
+// ===============================
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -34,7 +21,10 @@ app.use(
     session({
         secret: "vehicle-assistance-secret",
         resave: false,
-        saveUninitialized: false
+        saveUninitialized: false,
+        cookie: {
+            maxAge: 24 * 60 * 60 * 1000
+        }
     })
 );
 
@@ -43,117 +33,207 @@ app.set("view engine", "ejs");
 app.use(express.static("public"));
 
 
-// ==========================================
-// HOME PAGE
-// ==========================================
+// ===============================
+// MONGODB
+// ===============================
+
+mongoose
+    .connect("mongodb://127.0.0.1:27017/vehicleAssistance")
+    .then(() => {
+        console.log("MongoDB connected");
+    })
+    .catch((error) => {
+        console.error("MongoDB connection error:", error);
+    });
+
+
+// ===============================
+// HOME
+// ===============================
 
 app.get("/", (req, res) => {
+    res.redirect("/login");
+});
+
+
+// ===============================
+// USER LOGIN PAGE
+// ===============================
+
+app.get("/login", (req, res) => {
+    res.render("login");
+});
+
+
+// ===============================
+// USER LOGIN
+// ===============================
+
+app.post("/login", (req, res) => {
+
+    const { name, phone } = req.body;
+
+    if (!name || !phone) {
+        return res.status(400).json({
+            success: false,
+            message: "Name and phone are required"
+        });
+    }
+
+    req.session.user = {
+        name: name.trim(),
+        phone: phone.trim(),
+        role: "user"
+    };
+
+    console.log("USER LOGIN:");
+    console.log(req.session.user);
+
+    res.json({
+        success: true,
+        redirect: "/problem"
+    });
+});
+
+
+// ===============================
+// CURRENT USER
+// ===============================
+
+app.get("/current-user", (req, res) => {
+
+    if (req.session.helper) {
+
+        return res.json({
+            loggedIn: true,
+            role: "helper",
+            name: req.session.helper.name,
+            phone: req.session.helper.phone
+        });
+    }
+
+    if (req.session.user) {
+
+        return res.json({
+            loggedIn: true,
+            role: "user",
+            name: req.session.user.name,
+            phone: req.session.user.phone
+        });
+    }
+
+    res.json({
+        loggedIn: false
+    });
+});
+
+
+// ===============================
+// USER PROBLEM PAGE
+// ===============================
+
+app.get("/problem", (req, res) => {
+
+    if (!req.session.user) {
+        return res.redirect("/login");
+    }
+
     res.render("breakdown");
 });
 
 
-// ==========================================
+// ===============================
 // LOCATION
-// ==========================================
+// ===============================
 
 app.post("/location", (req, res) => {
 
-    const {
-        latitude,
-        longitude
-    } = req.body;
+    const { latitude, longitude } = req.body;
 
-    console.log("User Latitude:", latitude);
-    console.log("User Longitude:", longitude);
+    console.log("USER LOCATION:");
+    console.log("Latitude:", latitude);
+    console.log("Longitude:", longitude);
 
     res.json({
         success: true,
         message: "Location received"
     });
-
 });
 
 
-// ==========================================
+// ===============================
 // NLP PREDICTION
-// ==========================================
+// ===============================
 
 app.post("/predict", (req, res) => {
 
-    const problem = req.body.problem;
+    const { problem } = req.body;
 
     if (!problem) {
+
         return res.status(400).json({
-            message: "Problem description is required."
+            success: false,
+            message: "Problem is required"
         });
     }
 
-    console.log("Problem:", problem);
+    console.log("PROBLEM:", problem);
 
-    const python = spawn("python", [
-        "nlp/predict_from_app.py",
-        problem
-    ]);
+    const pythonProcess = spawn(
+        "python",
+        [
+            "nlp/predict_from_app.py",
+            problem
+        ]
+    );
 
-    let result = "";
+    let output = "";
+    let errorOutput = "";
 
-    python.stdout.on("data", (data) => {
-        result += data.toString();
+    pythonProcess.stdout.on("data", (data) => {
+        output += data.toString();
     });
 
-    python.stderr.on("data", (data) => {
-
-        console.log(
-            "Python error:",
-            data.toString()
-        );
-
+    pythonProcess.stderr.on("data", (data) => {
+        errorOutput += data.toString();
     });
 
-    python.on("error", (error) => {
-
-        console.log(
-            "Python process error:",
-            error
-        );
-
-        if (!res.headersSent) {
-            res.status(500).json({
-                message: "Unable to start Python."
-            });
-        }
-
-    });
-
-    python.on("close", (code) => {
+    pythonProcess.on("close", (code) => {
 
         if (code !== 0) {
 
-            return res.status(500).json({
-                message: "Prediction failed."
-            });
+            console.error("PYTHON ERROR:");
+            console.error(errorOutput);
 
+            return res.status(500).json({
+                success: false,
+                message: "Prediction failed"
+            });
         }
 
-        const category = result.trim();
+        console.log("PYTHON OUTPUT:", output);
 
-        console.log(
-            "Predicted category:",
-            category
-        );
+        const lines = output
+            .trim()
+            .split("\n")
+            .filter(line => line.trim() !== "");
+
+        const category =
+            lines[lines.length - 1].trim();
+
+        console.log("Predicted category:", category);
 
         res.json({
+            success: true,
             category: category
         });
-
     });
-
 });
 
 
-// ==========================================
-// HAVERSINE DISTANCE
-// ==========================================
+// ===============================
+// DISTANCE CALCULATION
+// ===============================
 
 function calculateDistance(
     lat1,
@@ -162,32 +242,20 @@ function calculateDistance(
     lon2
 ) {
 
-    lat1 = Number(lat1);
-    lon1 = Number(lon1);
-    lat2 = Number(lat2);
-    lon2 = Number(lon2);
-
     const R = 6371;
 
     const dLat =
-        (lat2 - lat1) *
-        Math.PI / 180;
+        (lat2 - lat1) * Math.PI / 180;
 
     const dLon =
-        (lon2 - lon1) *
-        Math.PI / 180;
+        (lon2 - lon1) * Math.PI / 180;
 
     const a =
         Math.sin(dLat / 2) *
         Math.sin(dLat / 2) +
 
-        Math.cos(
-            lat1 * Math.PI / 180
-        ) *
-
-        Math.cos(
-            lat2 * Math.PI / 180
-        ) *
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
 
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
@@ -203,356 +271,149 @@ function calculateDistance(
 }
 
 
-// ==========================================
-// FIND SUITABLE HELPERS
-// ==========================================
+// ===============================
+// FIND HELPERS
+// ===============================
 
 app.post("/find-helper", async (req, res) => {
 
-    const {
-        category,
-        latitude,
-        longitude
-    } = req.body;
-
-    console.log("\n========== FIND HELPER ==========");
-
-    console.log(
-        "Category:",
-        category
-    );
-
-    console.log(
-        "User Latitude:",
-        latitude
-    );
-
-    console.log(
-        "User Longitude:",
-        longitude
-    );
-
     try {
 
-        // -----------------------------
-        // Validate category
-        // -----------------------------
-
-        if (!category) {
-
-            return res.status(400).json({
-                message:
-                    "Problem category is missing."
-            });
-
-        }
-
-
-        // -----------------------------
-        // Validate location
-        // -----------------------------
-
-        const userLatitude =
-            Number(latitude);
-
-        const userLongitude =
-            Number(longitude);
+        const {
+            category,
+            latitude,
+            longitude
+        } = req.body;
 
         if (
-            !Number.isFinite(userLatitude) ||
-            !Number.isFinite(userLongitude)
+            !category ||
+            latitude === undefined ||
+            longitude === undefined
         ) {
 
             return res.status(400).json({
-                message:
-                    "Invalid user location."
+                success: false,
+                message: "Category and location are required"
             });
-
         }
 
+        const helpers = await Helper.find({
+            service: category,
+            available: true
+        });
 
-        // -----------------------------
-        // Check MongoDB connection
-        // -----------------------------
+        const userLat = Number(latitude);
+        const userLon = Number(longitude);
 
-        if (
-            mongoose.connection.readyState !== 1
-        ) {
-
-            return res.status(500).json({
-                message:
-                    "MongoDB is not connected."
-            });
-
-        }
-
-
-        // -----------------------------
-        // Find helpers
-        // -----------------------------
-
-        const helpers =
-            await Helper.find({
-                service: category,
-                available: true
-            });
-
-        console.log(
-            "Helpers found:",
-            helpers.length
-        );
-
-
-        // -----------------------------
-        // Calculate distance
-        // -----------------------------
-
-        const matchingHelpers = [];
-
-        for (const helper of helpers) {
-
-            const helperLatitude =
-                Number(helper.latitude);
-
-            const helperLongitude =
-                Number(helper.longitude);
-
-
-            if (
-                !Number.isFinite(helperLatitude) ||
-                !Number.isFinite(helperLongitude)
-            ) {
-
-                console.log(
-                    "Invalid location for helper:",
-                    helper.name
-                );
-
-                continue;
-
-            }
-
+        const result = helpers.map((helper) => {
 
             const distance =
                 calculateDistance(
-                    userLatitude,
-                    userLongitude,
-                    helperLatitude,
-                    helperLongitude
+                    userLat,
+                    userLon,
+                    helper.latitude,
+                    helper.longitude
                 );
 
-
-            matchingHelpers.push({
-
-                name:
-                    helper.name,
-
-                phone:
-                    helper.phone,
-
-                service:
-                    helper.service,
-
-                latitude:
-                    helperLatitude,
-
-                longitude:
-                    helperLongitude,
-
-                available:
-                    helper.available,
-
-                distance:
-                    Number(
-                        distance.toFixed(2)
-                    )
-
-            });
-
-        }
-
-
-        // -----------------------------
-        // Nearest helper first
-        // -----------------------------
-
-        matchingHelpers.sort(
-            (a, b) =>
-                a.distance - b.distance
-        );
-
-
-        console.log(
-            "Matching helpers:",
-            matchingHelpers
-        );
-
-        console.log(
-            "================================\n"
-        );
-
-
-        res.json(
-            matchingHelpers
-        );
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "ERROR FINDING HELPERS:"
-        );
-
-        console.log(error);
-
-        res.status(500).json({
-
-            message:
-                error.message ||
-                "Error finding helpers."
-
+            return {
+                id: helper._id,
+                name: helper.name,
+                phone: helper.phone,
+                service: helper.service,
+                latitude: helper.latitude,
+                longitude: helper.longitude,
+                distance: Number(
+                    distance.toFixed(2)
+                )
+            };
         });
 
-    }
+        result.sort(
+            (a, b) => a.distance - b.distance
+        );
 
+        console.log(
+            "Helpers found:",
+            result.length
+        );
+
+        res.json({
+            success: true,
+            helpers: result.slice(0, 5)
+        });
+
+    } catch (error) {
+
+        console.error(
+            "FIND HELPER ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Could not find helpers"
+        });
+    }
 });
 
 
-// ==========================================
+// ===============================
 // REQUEST HELPER
-// ==========================================
+// ===============================
 
 app.post("/request-helper", async (req, res) => {
 
-    const {
-        helperPhone,
-        problem,
-        category,
-        latitude,
-        longitude
-    } = req.body;
-
-
     try {
-
-        // ----------------------------------
-        // User must be logged in
-        // ----------------------------------
 
         if (!req.session.user) {
 
             return res.status(401).json({
-                message:
-                    "Please login before requesting assistance."
+                success: false,
+                message: "User not logged in"
             });
-
         }
 
-
-        const userName =
-            req.session.user.name;
-
-        const userPhone =
-            req.session.user.phone;
-
-
-        // ----------------------------------
-        // Validate
-        // ----------------------------------
-
-        if (!userName || !userPhone) {
-
-            return res.status(400).json({
-                message:
-                    "User name and phone are required."
-            });
-
-        }
-
-
-        if (!helperPhone) {
-
-            return res.status(400).json({
-                message:
-                    "Helper phone number is required."
-            });
-
-        }
-
-
-        if (!problem) {
-
-            return res.status(400).json({
-                message:
-                    "Problem description is required."
-            });
-
-        }
-
-
-        if (!category) {
-
-            return res.status(400).json({
-                message:
-                    "Problem category is required."
-            });
-
-        }
-
-
-        const userLatitude =
-            Number(latitude);
-
-        const userLongitude =
-            Number(longitude);
-
+        const {
+            helperPhone,
+            problem,
+            category,
+            latitude,
+            longitude
+        } = req.body;
 
         if (
-            !Number.isFinite(userLatitude) ||
-            !Number.isFinite(userLongitude)
+            !helperPhone ||
+            !problem ||
+            !category
         ) {
 
             return res.status(400).json({
-                message:
-                    "Valid location is required."
+                success: false,
+                message: "Missing request details"
             });
-
         }
-
-
-        // ----------------------------------
-        // Find helper
-        // ----------------------------------
 
         const helper =
             await Helper.findOne({
                 phone: helperPhone
             });
 
-
         if (!helper) {
 
             return res.status(404).json({
-                message:
-                    "Helper not found."
+                success: false,
+                message: "Helper not registered"
             });
-
         }
 
-
-        // ----------------------------------
-        // Create request
-        // ----------------------------------
-
-        const newRequest =
-            await AssistanceRequest.create({
+        const request =
+            new AssistanceRequest({
 
                 userName:
-                    userName,
+                    req.session.user.name,
 
                 userPhone:
-                    userPhone,
+                    req.session.user.phone,
 
                 helperName:
                     helper.name,
@@ -567,311 +428,47 @@ app.post("/request-helper", async (req, res) => {
                     category,
 
                 latitude:
-                    userLatitude,
+                    Number(latitude),
 
                 longitude:
-                    userLongitude,
+                    Number(longitude),
 
                 status:
                     "PENDING"
-
             });
-
-
-        console.log(
-            "NEW ASSISTANCE REQUEST:"
-        );
-
-        console.log(newRequest);
-
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Assistance request sent to helper."
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Error saving assistance request:"
-        );
-
-        console.log(error);
-
-        res.status(500).json({
-
-            success: false,
-
-            message:
-                error.message ||
-                "Failed to send assistance request."
-
-        });
-
-    }
-
-});
-
-
-// ==========================================
-// HELPER DASHBOARD
-// ==========================================
-
-app.get("/helper", (req, res) => {
-
-    res.render("helper");
-
-});
-
-
-// ==========================================
-// GET PENDING REQUEST FOR HELPER
-// ==========================================
-
-app.get("/helper-request", async (req, res) => {
-
-    try {
-
-        const request =
-            await AssistanceRequest
-                .findOne({
-                    status: "PENDING"
-                })
-                .sort({
-                    createdAt: -1
-                });
-
-
-        if (!request) {
-
-            return res.json({
-                found: false
-            });
-
-        }
-
-
-        res.json({
-
-            found: true,
-
-            request: {
-
-                userName:
-                    request.userName,
-
-                userPhone:
-                    request.userPhone,
-
-                helperName:
-                    request.helperName,
-
-                helperPhone:
-                    request.helperPhone,
-
-                problem:
-                    request.problem,
-
-                category:
-                    request.category,
-
-                latitude:
-                    request.latitude,
-
-                longitude:
-                    request.longitude,
-
-                status:
-                    request.status
-
-            }
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Error getting helper request:",
-            error
-        );
-
-        res.status(500).json({
-
-            found: false,
-
-            message:
-                "Error getting request."
-
-        });
-
-    }
-
-});
-
-
-// ==========================================
-// ACCEPT REQUEST
-// ==========================================
-
-app.post("/accept-request", async (req, res) => {
-
-    try {
-
-        const request =
-            await AssistanceRequest
-                .findOne({
-                    status: "PENDING"
-                })
-                .sort({
-                    createdAt: -1
-                });
-
-
-        if (!request) {
-
-            return res.json({
-
-                success: false,
-
-                message:
-                    "No pending request found."
-
-            });
-
-        }
-
-
-        request.status =
-            "ACCEPTED";
-
 
         await request.save();
 
-
         console.log(
-            "Request accepted."
+            "REQUEST CREATED:"
         );
 
+        console.log(request);
 
         res.json({
-
             success: true,
-
-            message:
-                "Assistance request accepted."
-
+            message: "Assistance request sent",
+            requestId: request._id
         });
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.log(
-            "Error accepting request:",
+        console.error(
+            "REQUEST HELPER ERROR:",
             error
         );
 
         res.status(500).json({
-
             success: false,
-
-            message:
-                "Error accepting request."
-
+            message: "Could not send assistance request"
         });
-
     }
-
 });
 
 
-// ==========================================
-// REJECT REQUEST
-// ==========================================
-
-app.post("/reject-request", async (req, res) => {
-
-    try {
-
-        const request =
-            await AssistanceRequest
-                .findOne({
-                    status: "PENDING"
-                })
-                .sort({
-                    createdAt: -1
-                });
-
-
-        if (!request) {
-
-            return res.json({
-
-                success: false,
-
-                message:
-                    "No pending request found."
-
-            });
-
-        }
-
-
-        request.status =
-            "REJECTED";
-
-
-        await request.save();
-
-
-        console.log(
-            "Request rejected."
-        );
-
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Assistance request rejected."
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Error rejecting request:",
-            error
-        );
-
-        res.status(500).json({
-
-            success: false,
-
-            message:
-                "Error rejecting request."
-
-        });
-
-    }
-
-});
-
-
-// ==========================================
+// ===============================
 // USER REQUEST STATUS
-// ==========================================
+// ===============================
 
 app.get("/request-status", async (req, res) => {
 
@@ -879,237 +476,432 @@ app.get("/request-status", async (req, res) => {
 
         if (!req.session.user) {
 
-            return res.json({
-
-                found: false,
-
-                status: "NOT_LOGGED_IN"
-
+            return res.status(401).json({
+                success: false,
+                message: "User not logged in"
             });
-
         }
 
+        let request = null;
 
-        const userPhone =
-            req.session.user.phone;
+        // Check exact request if requestId is provided
+        if (req.query.requestId) {
 
+            request =
+                await AssistanceRequest.findOne({
+                    _id: req.query.requestId,
+                    userPhone:
+                        req.session.user.phone
+                });
+
+        } else {
+
+            // Otherwise get latest request
+            request =
+                await AssistanceRequest
+                    .findOne({
+                        userPhone:
+                            req.session.user.phone
+                    })
+                    .sort({
+                        createdAt: -1
+                    });
+        }
+
+        if (!request) {
+
+            return res.json({
+                success: true,
+                request: null
+            });
+        }
+
+        console.log(
+            "USER REQUEST STATUS:",
+            request._id,
+            request.status
+        );
+
+        res.json({
+            success: true,
+            request: request
+        });
+
+    } catch (error) {
+
+        console.error(
+            "REQUEST STATUS ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Could not get request status"
+        });
+    }
+});
+
+
+// ===============================
+// HELPER LOGIN PAGE
+// ===============================
+
+app.get("/helper-login", (req, res) => {
+    res.render("helper-login");
+});
+
+
+// ===============================
+// HELPER LOGIN
+// ===============================
+
+app.post("/helper-login", async (req, res) => {
+
+    try {
+
+        const { phone } = req.body;
+
+        if (!phone) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Phone number required"
+            });
+        }
+
+        const helper =
+            await Helper.findOne({
+                phone: phone.trim()
+            });
+
+        if (!helper) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Helper not registered"
+            });
+        }
+
+        req.session.helper = {
+
+            name: helper.name,
+
+            phone: helper.phone,
+
+            role: "helper"
+        };
+
+        console.log(
+            "HELPER LOGIN:"
+        );
+
+        console.log(
+            req.session.helper
+        );
+
+        res.json({
+            success: true,
+            redirect: "/helper"
+        });
+
+    } catch (error) {
+
+        console.error(
+            "HELPER LOGIN ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Helper login failed"
+        });
+    }
+});
+
+
+// ===============================
+// HELPER DASHBOARD
+// ===============================
+
+app.get("/helper", (req, res) => {
+
+    if (!req.session.helper) {
+        return res.redirect("/helper-login");
+    }
+
+    res.render("helper");
+});
+
+
+// ===============================
+// GET HELPER REQUEST
+// ===============================
+
+app.get("/helper-request", async (req, res) => {
+
+    try {
+
+        if (!req.session.helper) {
+
+            return res.status(401).json({
+                success: false,
+                message: "Helper not logged in"
+            });
+        }
 
         const request =
             await AssistanceRequest
                 .findOne({
-                    userPhone: userPhone
+                    helperPhone:
+                        req.session.helper.phone,
+
+                    status:
+                        "PENDING"
                 })
                 .sort({
                     createdAt: -1
                 });
 
-
         if (!request) {
 
             return res.json({
-
-                found: false,
-
-                status: "NONE"
-
+                success: true,
+                request: null
             });
-
         }
-
-
-        // ----------------------------------
-        // Get helper details
-        // ----------------------------------
-
-        const helper =
-            await Helper.findOne({
-                phone:
-                    request.helperPhone
-            });
-
-
-        let helperName =
-            request.helperName || "Helper";
-
-        let helperLatitude =
-            null;
-
-        let helperLongitude =
-            null;
-
-
-        if (helper) {
-
-            helperName =
-                helper.name;
-
-            helperLatitude =
-                Number(
-                    helper.latitude
-                );
-
-            helperLongitude =
-                Number(
-                    helper.longitude
-                );
-
-        }
-
-
-        res.json({
-
-            found: true,
-
-            request: {
-
-                userName:
-                    request.userName,
-
-                userPhone:
-                    request.userPhone,
-
-                helperName:
-                    helperName,
-
-                helperPhone:
-                    request.helperPhone,
-
-                problem:
-                    request.problem,
-
-                category:
-                    request.category,
-
-                latitude:
-                    request.latitude,
-
-                longitude:
-                    request.longitude,
-
-                helperLatitude:
-                    helperLatitude,
-
-                helperLongitude:
-                    helperLongitude,
-
-                status:
-                    request.status
-
-            }
-
-        });
-
-    }
-
-    catch (error) {
 
         console.log(
-            "Error checking request status:",
+            "HELPER REQUEST FOUND:"
+        );
+
+        console.log(request);
+
+        res.json({
+            success: true,
+            request: request
+        });
+
+    } catch (error) {
+
+        console.error(
+            "HELPER REQUEST ERROR:",
             error
         );
 
         res.status(500).json({
-
-            found: false,
-
-            status: "ERROR"
-
+            success: false,
+            message: "Could not get request"
         });
-
     }
-
 });
 
 
-// ==========================================
-// LOGIN PAGE
-// ==========================================
+// ===============================
+// ACCEPT REQUEST
+// ===============================
 
-app.get("/login", (req, res) => {
+app.post("/accept-request", async (req, res) => {
 
-    res.render("login");
+    try {
 
-});
+        if (!req.session.helper) {
 
+            return res.status(401).json({
+                success: false,
+                message: "Helper not logged in"
+            });
+        }
 
-// ==========================================
-// USER LOGIN
-// ==========================================
+        const { requestId } = req.body;
 
-app.post("/login", (req, res) => {
+        if (!requestId) {
 
-    const {
-        name,
-        phone
-    } = req.body;
+            return res.status(400).json({
+                success: false,
+                message: "Request ID required"
+            });
+        }
 
+        const request =
+            await AssistanceRequest.findById(
+                requestId
+            );
 
-    if (!name || !phone) {
+        if (!request) {
 
-        return res.status(400).send(
-            "Name and phone are required."
+            return res.status(404).json({
+                success: false,
+                message: "Request not found"
+            });
+        }
+
+        if (
+            request.helperPhone !==
+            req.session.helper.phone
+        ) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "This request belongs to another helper"
+            });
+        }
+
+        if (request.status !== "PENDING") {
+
+            return res.json({
+                success: false,
+                message:
+                    `Request is already ${request.status}`
+            });
+        }
+
+        request.status = "ACCEPTED";
+
+        await request.save();
+
+        console.log(
+            "REQUEST ACCEPTED:",
+            request._id
         );
 
-    }
-
-
-    req.session.user = {
-
-        name:
-            name,
-
-        phone:
-            phone,
-
-        role:
-            "user"
-
-    };
-
-
-    console.log(
-        "User logged in:",
-        req.session.user
-    );
-
-
-    res.redirect("/");
-
-});
-
-
-// ==========================================
-// CURRENT USER
-// ==========================================
-
-app.get("/current-user", (req, res) => {
-
-    if (!req.session.user) {
-
-        return res.json({
-
-            loggedIn: false
-
+        res.json({
+            success: true,
+            message: "Request accepted"
         });
 
+    } catch (error) {
+
+        console.error(
+            "ACCEPT ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Accept failed"
+        });
     }
-
-
-    res.json({
-
-        loggedIn: true,
-
-        user:
-            req.session.user
-
-    });
-
 });
 
 
-// ==========================================
-// LOGOUT
-// ==========================================
+// ===============================
+// REJECT REQUEST
+// ===============================
+
+app.post("/reject-request", async (req, res) => {
+
+    try {
+
+        if (!req.session.helper) {
+
+            return res.status(401).json({
+                success: false,
+                message: "Helper not logged in"
+            });
+        }
+
+        const { requestId } = req.body;
+
+        if (!requestId) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Request ID required"
+            });
+        }
+
+        const request =
+            await AssistanceRequest.findById(
+                requestId
+            );
+
+        if (!request) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Request not found"
+            });
+        }
+
+        if (
+            request.helperPhone !==
+            req.session.helper.phone
+        ) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "This request belongs to another helper"
+            });
+        }
+
+        if (request.status !== "PENDING") {
+
+            return res.json({
+                success: false,
+                message:
+                    `Request is already ${request.status}`
+            });
+        }
+
+        request.status = "REJECTED";
+
+        await request.save();
+
+        console.log(
+            "REQUEST REJECTED:",
+            request._id
+        );
+
+        res.json({
+            success: true,
+            message: "Request rejected"
+        });
+
+    } catch (error) {
+
+        console.error(
+            "REJECT ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Reject failed"
+        });
+    }
+});
+
+
+// ===============================
+// HELPER LOGOUT
+// ===============================
+
+app.get("/helper-logout", (req, res) => {
+
+    req.session.destroy((error) => {
+
+        if (error) {
+
+            return res.status(500).json({
+                success: false,
+                message: "Logout failed"
+            });
+        }
+
+        res.clearCookie("connect.sid");
+
+        res.json({
+            success: true
+        });
+    });
+});
+
+
+// ===============================
+// USER LOGOUT
+// ===============================
 
 app.get("/logout", (req, res) => {
 
@@ -1117,349 +909,122 @@ app.get("/logout", (req, res) => {
 
         if (error) {
 
-            console.log(
-                "Logout error:",
-                error
-            );
-
             return res.status(500).send(
-                "Logout failed."
+                "Logout failed"
             );
-
         }
 
+        res.clearCookie("connect.sid");
 
-        res.redirect("/");
-
+        res.redirect("/login");
     });
-
 });
 
 
-// ==========================================
-// HELPER REGISTRATION PAGE
-// ==========================================
-
-app.get("/register-helper", (req, res) => {
-
-    res.send(`
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-    <title>Register Helper</title>
-
-</head>
-
-<body>
-
-    <h1>Register Helper</h1>
-
-    <form
-        method="POST"
-        action="/register-helper"
-    >
-
-        <p>
-
-            <label>
-                Helper Name
-            </label>
-
-            <br>
-
-            <input
-                type="text"
-                name="name"
-                required
-            >
-
-        </p>
-
-
-        <p>
-
-            <label>
-                Phone Number
-            </label>
-
-            <br>
-
-            <input
-                type="text"
-                name="phone"
-                required
-            >
-
-        </p>
-
-
-        <p>
-
-            <label>
-                Service
-            </label>
-
-            <br>
-
-            <select
-                name="service"
-                required
-            >
-
-                <option value="">
-                    Select Service
-                </option>
-
-                <option value="PUNCTURE">
-                    PUNCTURE
-                </option>
-
-                <option value="BATTERY_STARTING">
-                    BATTERY_STARTING
-                </option>
-
-                <option value="FUEL">
-                    FUEL
-                </option>
-
-                <option value="OVERHEATING">
-                    OVERHEATING
-                </option>
-
-                <option value="TOWING">
-                    TOWING
-                </option>
-
-            </select>
-
-        </p>
-
-
-        <p>
-
-            <label>
-                Latitude
-            </label>
-
-            <br>
-
-            <input
-                type="number"
-                step="any"
-                name="latitude"
-                required
-            >
-
-        </p>
-
-
-        <p>
-
-            <label>
-                Longitude
-            </label>
-
-            <br>
-
-            <input
-                type="number"
-                step="any"
-                name="longitude"
-                required
-            >
-
-        </p>
-
-
-        <button type="submit">
-            Register Helper
-        </button>
-
-    </form>
-
-</body>
-
-</html>
-
-    `);
-
-});
-
-
-// ==========================================
+// ===============================
 // REGISTER HELPER
-// ==========================================
+// ===============================
 
 app.post("/register-helper", async (req, res) => {
 
-    const {
-        name,
-        phone,
-        service,
-        latitude,
-        longitude
-    } = req.body;
-
-
     try {
+
+        const {
+            name,
+            phone,
+            service,
+            latitude,
+            longitude
+        } = req.body;
 
         if (
             !name ||
             !phone ||
-            !service
+            !service ||
+            latitude === undefined ||
+            longitude === undefined
         ) {
 
-            return res.status(400).send(
-                "Name, phone and service are required."
-            );
-
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
         }
-
-
-        const helperLatitude =
-            Number(latitude);
-
-        const helperLongitude =
-            Number(longitude);
-
-
-        if (
-            !Number.isFinite(helperLatitude) ||
-            !Number.isFinite(helperLongitude)
-        ) {
-
-            return res.status(400).send(
-                "Valid latitude and longitude are required."
-            );
-
-        }
-
-
-        // ----------------------------------
-        // Check whether helper already exists
-        // ----------------------------------
 
         const existingHelper =
             await Helper.findOne({
-                phone: phone
+                phone: phone.trim()
             });
-
 
         if (existingHelper) {
 
-            return res.status(400).send(
-                "A helper with this phone number already exists."
-            );
-
+            return res.status(400).json({
+                success: false,
+                message: "Helper already registered"
+            });
         }
 
-
-        // ----------------------------------
-        // Create helper
-        // ----------------------------------
-
         const helper =
-            await Helper.create({
+            new Helper({
 
                 name:
-                    name,
+                    name.trim(),
 
                 phone:
-                    phone,
+                    phone.trim(),
 
                 service:
-                    service,
+                    service.trim(),
 
                 latitude:
-                    helperLatitude,
+                    Number(latitude),
 
                 longitude:
-                    helperLongitude,
+                    Number(longitude),
 
                 available:
                     true
-
             });
 
+        await helper.save();
 
         console.log(
-            "Helper registered:",
+            "HELPER REGISTERED:",
             helper
         );
 
+        res.json({
+            success: true,
+            message:
+                "Helper registered successfully",
+            helper:
+                helper
+        });
 
-        res.send(`
+    } catch (error) {
 
-            <h2>
-                Helper registered successfully!
-            </h2>
-
-            <p>
-                Name: ${helper.name}
-            </p>
-
-            <p>
-                Service: ${helper.service}
-            </p>
-
-            <p>
-                Phone: ${helper.phone}
-            </p>
-
-            <a href="/">
-                Go to Home
-            </a>
-
-        `);
-
-    }
-
-    catch (error) {
-
-        console.log(
-            "Error registering helper:"
+        console.error(
+            "REGISTER HELPER ERROR:",
+            error
         );
 
-        console.log(error);
-
-
-        res.status(500).send(
-
-            "Helper registration failed: " +
-            error.message
-
-        );
-
+        res.status(500).json({
+            success: false,
+            message:
+                "Helper registration failed"
+        });
     }
-
 });
 
 
-// ==========================================
+// ===============================
 // START SERVER
-// ==========================================
+// ===============================
 
-app.listen(3000, () => {
-
-    console.log(
-        "================================"
-    );
+app.listen(PORT, () => {
 
     console.log(
-        "Server running on:"
-    );
-
-    console.log(
-        "http://localhost:3000"
-    );
-
-    console.log(
-        "================================"
+        `Server running at http://localhost:${PORT}`
     );
 
 });
-
